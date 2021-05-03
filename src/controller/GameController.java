@@ -1,9 +1,11 @@
 package controller;
 
+import games.GameEvaluator;
 import model.Deck;
 import model.Player;
 import model.PlayingCard;
-import view.View;
+import view.CommandLineView;
+import view.GameViewable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,16 +17,17 @@ public class GameController {
     Deck deck;
     List<Player> players;
     Player winner;
-    View view;
+    GameViewable view;
+    GameEvaluator gameEvaluator;
 
     GameState gameState;
-    public GameController(Deck deck, View view){
+    public GameController(Deck deck, GameViewable view, GameEvaluator gameEvaluator){
         this.deck = deck;
         this.players = new ArrayList<Player>();
         this.view = view;
         view.setController(this);
         this.gameState = GameState.AddingPlayers;
-
+        this.gameEvaluator = gameEvaluator;
     }
 
     public void run(){
@@ -44,6 +47,19 @@ public class GameController {
     public void addPlayer(String playerName){
         this.players.add(new Player(playerName));
         view.showPlayerName(players.size(), playerName);
+    }
+
+    public void nextAction(String nextChoice){
+        if (nextChoice.equals("+q")){
+            exitGame();
+        }
+        else{
+            startGame();
+        }
+
+    }
+    public void exitGame(){
+        System.exit(0);
     }
 
     public void startGame(){
@@ -82,34 +98,6 @@ public class GameController {
         }
     }
     void evaluateWinner(){
-        Player bestPlayer = null;
-        int bestSuit = -1;
-        int bestRank = -1;
-        for(Player player: players){
-            boolean newBestPlayer = false;
-            if(bestPlayer == null){
-                newBestPlayer = true;
-            }
-            else{
-                PlayingCard pc = player.getCard(0);
-                int thisRank = pc.getRank().value();
-                if(thisRank >= bestRank){
-                    if(thisRank > bestRank){
-                        newBestPlayer = true;
-                    }
-                    else if (pc.getSuit().value() > bestSuit){
-                        newBestPlayer = true;
-                    }
-                }
-            }
-            if (newBestPlayer){
-                bestPlayer = player;
-                PlayingCard pc = player.getCard(0);
-                bestRank = pc.getRank().value();
-                bestSuit = pc.getSuit().value();
-
-            }
-        }
-        winner = bestPlayer;
+        winner = gameEvaluator.evaluateWinner(players);
     }
 }
